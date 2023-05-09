@@ -48,14 +48,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let text = resp.text().await?;
     let root: Obj = serde_json::from_str::<Obj>(&text).unwrap();
-    for mut i in root.values {
-        let close: f32 = i.close.parse().unwrap();
-        let previous_close: f32 = i.previous_close.parse().unwrap();
-        
-        let diff: f32 = calculate_percentage_change(previous_close, close);
-        i.diff = Some(diff);
-        println!("{:#?}", i);
-    }
-    
+    let end = root.values.first().unwrap();
+    let start = root.values.last().unwrap();
+
+    let close: f32 = end.close.parse().unwrap();
+    let open: f32 = start.open.parse().unwrap();
+
+    let diff: f32 = calculate_percentage_change(open, close);
+
+    println!("Diff between {} and {} is {}%", open, close, diff);
+
     Ok(())
 }
