@@ -12,6 +12,7 @@ reqwest = { version = "0.11", features = ["json"] }
 serde = { version = "1.0.162", features = ["derive"] }
 serde_json = "1.0.96"
 tokio = { version = "1", features = ["full"] }
+sqlx = { version = "0.6.3", features = [ "runtime-tokio-rustls", "mysql"] }
 
 [lib]
 name = "percentage_change_calculator"
