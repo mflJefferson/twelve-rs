@@ -1,62 +1,48 @@
-use serde::{Deserialize, Serialize};
+use clap::Parser;
 
 use percentage_change_calculator::calculate_percentage_change;
+mod twelve_api;
+mod db;
 
 #[macro_use]
 extern crate dotenv_codegen;
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Obj {
-    pub meta: Meta,
-    pub values: Vec<Value>
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Meta {
-    pub symbol: String,
-    pub interval: String,
-    pub currency_base: String,
-    pub currency_quote: String,
-    pub exchange: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Value {
-    pub datetime: String,
-    pub open: String,
-    pub high: String,
-    pub low: String,
-    pub close: String,
-    pub previous_close: String,
-    #[serde(skip_serializing)]
-    pub diff: Option<f32>
+#[derive(Parser)]
+#[command(author, version, about, long_about = None)]
+struct Cli {
+    #[arg(short, long)]
+    symbol: String,
+    #[arg(long)]
+    start: String,
+    #[arg(long)]
+    end: String,
+    #[arg(short, long)]
+    interval: String,
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let cli = Cli::parse();
     let api_key: String = dotenv!("TWELVE_SECRET").to_owned();
-    let mut url: String = "https://api.twelvedata.com/".to_owned();
-    let mut endpoint :String = "time_series?symbol=ETH/BTC:Huobi&interval=5min&previous_close=true&date=today&timezone=America/Sao_Paulo&outputsize=3000&dp=8&apikey=".to_owned();
 
-    endpoint.push_str(&api_key);
-    url.push_str(&endpoint);
-
+    let url :String = twelve_api::format_endpoint(api_key, cli.symbol, cli.start, cli.end, cli.interval);
     println!("{:?}", url);
 
     let resp = reqwest::get(url)
         .await?;
 
     let text = resp.text().await?;
-    let root: Obj = serde_json::from_str::<Obj>(&text).unwrap();
-    let end = root.values.first().unwrap();
-    let start = root.values.last().unwrap();
+    let root: twelve_api::Obj = serde_json::from_str::<twelve_api::Obj>(&text).unwrap();
 
-    let close: f32 = end.close.parse().unwrap();
+    let start = root.values.first().unwrap();
+    let end = root.values.last().unwrap();
+
     let open: f32 = start.open.parse().unwrap();
+    let close: f32 = end.close.parse().unwrap();
 
     let diff: f32 = calculate_percentage_change(open, close);
 
-    println!("Diff between {} and {} is {}%", open, close, diff);
+    db::insert(root.meta.symbol, &start.datetime, &end.datetime, diff).await?;
 
     Ok(())
 }
