@@ -9,6 +9,7 @@ pub fn calculate_percentage_change(first: f32, second: f32) -> f32 {
     return 0 as f32;
 }
 
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -22,5 +23,7 @@ mod tests {
         assert_eq!(calculate_percentage_change(2.4, 1.2), -50.0);
         assert_eq!(calculate_percentage_change(1.1, 1.1), 0.0);
         assert_eq!(calculate_percentage_change(0.06837900, 0.06642600), -2.8561375);
+        assert_eq!(calculate_percentage_change(28838.16, 29505.61), 2.3144653);
+        assert_eq!(calculate_percentage_change(28800.00, 29677.00), 3.0451388);
     }
 }
