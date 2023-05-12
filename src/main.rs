@@ -43,22 +43,34 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let min_open = root.values.iter().min_by_key(|v| &v.open).unwrap();
     let max_close = root.values.iter().max_by_key(|v| &v.close).unwrap();
 
-    let (_is_is_greater_1, diff_1) = timeseries::greater_change_than(max_open, min_close);
+    let (is_is_greater_1, diff_1) = timeseries::greater_change_than(max_open, min_close);
     let (_is_is_greater_2, diff_2) = timeseries::greater_change_than(min_open, max_close);
 
+    let open_date: String;
+    let open_value: String;
+    let close_date: String;
+    let close_value: String;
     let diff = if diff_1.abs() > diff_2.abs() {
         println!("Diff 1 = {}", diff_1);
         println!("Usando max_open data: {} valor: {}", max_open.datetime, max_open.open);
         println!("Usando min_close data: {} valor: {}", min_close.datetime, min_close.close);
+        open_date = max_open.datetime.clone();
+        open_value = max_open.open.clone();
+        close_date = min_close.datetime.clone();
+        close_value = min_close.close.clone();
         diff_1
     } else {
         println!("Diff 2 = {}", diff_2);
         println!("Usando min_open data: {} valor: {}", min_open.datetime, min_open.open);
         println!("Usando max_close data: {} valor: {}", max_close.datetime, max_close.close);
+        open_date = min_open.datetime.clone();
+        open_value = min_open.open.clone();
+        close_date = max_close.datetime.clone();
+        close_value = max_close.close.clone();
         diff_2
     };
 
-    db::insert(root.meta.symbol, &start.datetime, &end.datetime, diff).await?;
+    db::insert(root.meta.symbol, &start.datetime, &end.datetime, diff, open_date, open_value, close_date, close_value).await?;
 
     Ok(())
 }
