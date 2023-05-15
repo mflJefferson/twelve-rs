@@ -1,8 +1,7 @@
 use clap::Parser;
 
-mod twelve_api;
-use twelve_api::*;
-mod db;
+use core;
+use core::domain::fetch_record;
 
 #[macro_use]
 extern crate dotenv_codegen;
@@ -25,14 +24,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
     let api_key: String = dotenv!("TWELVE_SECRET").to_owned();
 
-    let url :String = timeseries::format_endpoint(api_key, cli.symbol, cli.start, cli.end, cli.interval);
+    let url :String = core::domain::fetch_record::format_endpoint(api_key, cli.symbol, cli.start, cli.end, cli.interval);
     println!("{:?}", url);
 
     let resp = reqwest::get(url)
         .await?;
 
     let text = resp.text().await?;
-    let root: timeseries::Obj = serde_json::from_str::<timeseries::Obj>(&text).unwrap();
+    let root: fetch_record::Obj = serde_json::from_str::<fetch_record::Obj>(&text).unwrap();
 
     let start = root.values.first().unwrap();
     let end = root.values.last().unwrap();
@@ -43,8 +42,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let min_open = root.values.iter().min_by_key(|v| &v.open).unwrap();
     let max_close = root.values.iter().max_by_key(|v| &v.close).unwrap();
 
-    let (is_is_greater_1, diff_1) = timeseries::greater_change_than(max_open, min_close);
-    let (_is_is_greater_2, diff_2) = timeseries::greater_change_than(min_open, max_close);
+    let (_is_is_greater_1, diff_1) = fetch_record::greater_change_than(max_open, min_close);
+    let (_is_is_greater_2, diff_2) = fetch_record::greater_change_than(min_open, max_close);
 
     let open_date: String;
     let open_value: String;
@@ -70,7 +69,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         diff_2
     };
 
-    db::insert(root.meta.symbol, &start.datetime, &end.datetime, diff, open_date, open_value, close_date, close_value).await?;
+    core::repository::timeseries::insert(root.meta.symbol, &start.datetime, &end.datetime, diff, open_date, open_value, close_date, close_value).await?;
 
     Ok(())
 }

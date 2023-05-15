@@ -1,0 +1,22 @@
+[package]
+name = "twelve-cli"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+dotenv = "0.15.0"
+dotenv_codegen = "0.15.0"
+reqwest = { version = "0.11", features = ["json"] }
+serde = { version = "1.0.162", features = ["derive"] }
+serde_json = "1.0.96"
+tokio = { version = "1", features = ["full"] }
+sqlx = { version = "0.6.3", features = [ "runtime-tokio-rustls", "mysql"] }
+clap = {version = "4.2.7", features = ["derive"]}
+chrono = "0.4.24"
+core = { path = "../core" }
+
+[[bin]]
+name = "twelve-cli"
+path = "src/main.rs"

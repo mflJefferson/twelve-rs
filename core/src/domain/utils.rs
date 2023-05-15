@@ -5,7 +5,6 @@ pub fn calculate_percentage_change(first: f32, second: f32) -> f32 {
     if first > second {
         return (first - second) / first * 100.0 * -1.0;
     }
-
     return 0 as f32;
 }
 
