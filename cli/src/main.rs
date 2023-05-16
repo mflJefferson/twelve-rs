@@ -1,7 +1,7 @@
 use clap::Parser;
 
-use core;
-use core::domain::fetch_record;
+use core_service;
+use core_service::domain::fetch_record;
 
 #[macro_use]
 extern crate dotenv_codegen;
@@ -20,11 +20,11 @@ struct Cli {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<(), reqwest::Error> {
     let cli = Cli::parse();
     let api_key: String = dotenv!("TWELVE_SECRET").to_owned();
 
-    let url :String = core::domain::fetch_record::format_endpoint(api_key, cli.symbol, cli.start, cli.end, cli.interval);
+    let url :String = core_service::domain::fetch_record::format_endpoint(api_key, cli.symbol, cli.start, cli.end, cli.interval);
     println!("{:?}", url);
 
     let resp = reqwest::get(url)
@@ -69,7 +69,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         diff_2
     };
 
-    core::repository::timeseries::insert(root.meta.symbol, &start.datetime, &end.datetime, diff, open_date, open_value, close_date, close_value).await?;
+    match core_service::repository::timeseries::insert(root.meta.symbol, &start.datetime, &end.datetime, diff, open_date, open_value, close_date, close_value).await {
+        Ok(n) => n,
+        Err(e) => {
+            eprintln!("failed to insert new record; err = {:?}", e);
+        }
+    };
 
     Ok(())
 }

@@ -14,7 +14,7 @@ pub struct Meta {
     pub interval: String,
     pub currency_base: String,
     pub currency_quote: String,
-    pub exchange: String,
+    pub exchange: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

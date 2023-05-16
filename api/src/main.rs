@@ -1,24 +1,33 @@
+mod error;
+
+use std::fmt::Debug;
+pub use self::error::{Error, Result};
+
 use axum::{
     routing::get,
     Router,
-    response::Json
+    response::Json,
+    extract::Query
 };
-
+use axum::response::IntoResponse;
 use serde::{Deserialize, Serialize};
+use core_service;
+use crate::core_service::model::tw_queries::TwQuery;
 
 //use serde_json::{Value, json};
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Hello {
-    hello: String,
+struct TimeseriesParams {
+    symbol: Option<String>,
+    start: Option<String>,
+    end: Option<String>,
 }
 
 #[tokio::main]
 async fn main() {
     // build our application with a single route
     let app = Router::new()
-        .route("/", get(root))
-        .route("/foo", get(get_foo));
+        .route("/timeseries", get(get_timeseries));
 
     // run it with hyper on localhost:3000
     axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
@@ -27,16 +36,20 @@ async fn main() {
         .unwrap();
 }
 
-async fn root() -> Json<Hello> {
-    let hello = Hello {
-        hello: "world".to_owned()
-    };
-    Json(hello)
-}
+async fn get_timeseries(params: Query<TimeseriesParams>) -> impl IntoResponse {
+    let symbol = params.symbol.as_deref().unwrap_or("BTC/USD");
+    let start = params.symbol.as_deref().unwrap_or("2023-05-10 00:00:00");
+    let end = params.symbol.as_deref().unwrap_or("2023-05-10 23:59:59");
 
-async fn get_foo() -> Json<Hello> {
-    let hello = Hello {
-        hello: "world".to_owned()
+    let timeseries = match core_service::repository::timeseries::retrieve(symbol, start, end).await {
+        Ok(timeseries) => timeseries,
+        Err(e) => {
+            eprintln!("failed: {:?}", e);
+            return Err(Error::FetchFail)
+        }
     };
-    Json(hello)
+
+
+
+    Ok(Json(timeseries))
 }
