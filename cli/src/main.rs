@@ -24,7 +24,7 @@ async fn main() -> Result<(), reqwest::Error> {
     let cli = Cli::parse();
     let api_key: String = dotenv!("TWELVE_SECRET").to_owned();
 
-    let url :String = core_service::domain::fetch_record::format_endpoint(api_key, cli.symbol, cli.start, cli.end, cli.interval);
+    let url :String = fetch_record::format_endpoint(api_key, cli.symbol, cli.start, cli.end, cli.interval);
     println!("{:?}", url);
 
     let resp = reqwest::get(url)

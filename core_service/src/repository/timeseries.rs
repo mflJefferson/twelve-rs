@@ -24,7 +24,7 @@ pub async fn insert(symbol: String, start: &String, end: &String, diff: f32, ope
 
 pub async fn retrieve(symbol: impl Into<String>, start: impl Into<String>, end: impl Into<String>) -> Result<Vec<tw_queries::TwQuery>, sqlx::Error> {
     let pool = MySqlPoolOptions::new()
-        .max_connections(5)
+        .max_connections(10)
         .connect(dotenv!("DATABASE_URL"))
         .await?;
 
@@ -41,6 +41,8 @@ pub async fn retrieve(symbol: impl Into<String>, start: impl Into<String>, end: 
         .bind(end.into())
         .fetch_all(&pool)
         .await?;
+
+    pool.close().await;
 
     return Ok(result);
 }
