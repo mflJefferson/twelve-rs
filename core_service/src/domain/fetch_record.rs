@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use chrono::prelude::*;
-use lib::calculate_percentage_change;
+use crate::domain::utils;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Obj {
@@ -14,7 +14,7 @@ pub struct Meta {
     pub interval: String,
     pub currency_base: String,
     pub currency_quote: String,
-    pub exchange: String,
+    pub exchange: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -33,7 +33,7 @@ pub fn format_endpoint(api_key: String, symbol: String, start: String, end: Stri
 }
 
 pub fn greater_change_than(open: &Value, close: &Value) -> (bool, f32) {
-    
+
     let open_date: DateTime<Utc> = Utc.datetime_from_str(&open.datetime, "%Y-%m-%d %H:%M:%S").unwrap();
     let close_date: DateTime<Utc> = Utc.datetime_from_str(&close.datetime, "%Y-%m-%d %H:%M:%S").unwrap();
 
@@ -41,16 +41,16 @@ pub fn greater_change_than(open: &Value, close: &Value) -> (bool, f32) {
         let open_value: f32 = open.open.parse().unwrap();
         let close_value: f32 = close.close.parse().unwrap();
 
-        let diff: f32 = calculate_percentage_change(close_value, open_value);
-        
+        let diff: f32 = utils::calculate_percentage_change(close_value, open_value);
+
         return (true, diff);
     }
-    
+
     let open_value: f32 = open.open.parse().unwrap();
     let close_value: f32 = close.close.parse().unwrap();
 
-    let diff: f32 = calculate_percentage_change(open_value, close_value);
-    
+    let diff: f32 = utils::calculate_percentage_change(open_value, close_value);
+
     return (false, diff);
-    
+
 }
