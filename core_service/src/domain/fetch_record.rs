@@ -28,6 +28,11 @@ pub struct Value {
     pub diff: Option<f32>
 }
 
+#[derive(Deserialize)]
+pub struct TwelveError {
+    pub message: String,
+}
+
 pub fn format_endpoint(api_key: String, symbol: String, start: String, end: String, interval: String) -> String {
     format!("https://api.twelvedata.com/time_series?&previous_close=true&timezone=America/Sao_Paulo&outputsize=5000&dp=8&apikey={api_key}&symbol={symbol}&start_date={start}&end_date={end}&interval={interval}&order=ASC")
 }

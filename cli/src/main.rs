@@ -58,8 +58,10 @@ async fn main() -> Result<(), CommandError> {
     let root: fetch_record::Obj = match serde_json::from_str::<fetch_record::Obj>(&text) {
         Ok(root) => root,
         Err(e) => {
+            let json_error = serde_json::from_str::<fetch_record::TwelveError>(&text).unwrap();
             error!("{}", e);
             error!("{}", url);
+            error!("{}", json_error.message);
             return Err(CommandError::SerdeJsonError(e))
         }
     };
@@ -103,7 +105,9 @@ async fn main() -> Result<(), CommandError> {
     match core_service::repository::timeseries::insert(root.meta.symbol, &start.datetime, &end.datetime, diff, open_date, open_value, close_date, close_value).await {
         Ok(n) => n,
         Err(e) => {
-            eprintln!("failed to insert new record; err = {:?}", e);
+            error!("{:?}", e);
+            error!("{}", url);
+            return Err(CommandError::SqlxError(e))
         }
     };
 
