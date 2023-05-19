@@ -1,0 +1,13 @@
+appenders:
+  stdout:
+      kind: file
+      path: "log/commands.log"
+      encoder:
+        pattern: "{d(%+)(utc)} [{f}:{L}] {h({l})} {M}:{m}{n}"
+      filters:
+        - kind: threshold
+          level: warn
+root:
+  level: info
+  appenders:
+    - stdout

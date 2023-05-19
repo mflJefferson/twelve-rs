@@ -1,4 +1,9 @@
+mod command_error;
+use log4rs;
 use clap::Parser;
+use log::error;
+use serde_yaml;
+use command_error::CommandError;
 
 use core_service;
 use core_service::domain::fetch_record;
@@ -20,18 +25,44 @@ struct Cli {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), reqwest::Error> {
+async fn main() -> Result<(), CommandError> {
+    let config_str = include_str!("config/log4rs.yaml");
+    let config = serde_yaml::from_str(config_str).unwrap();
+    log4rs::init_raw_config(config).unwrap();
+
     let cli = Cli::parse();
     let api_key: String = dotenv!("TWELVE_SECRET").to_owned();
 
     let url :String = fetch_record::format_endpoint(api_key, cli.symbol, cli.start, cli.end, cli.interval);
     println!("{:?}", url);
 
-    let resp = reqwest::get(url)
-        .await?;
+    let resp = match reqwest::get(&url).await {
+        Ok(resp) => resp,
+        Err(e) => {
+            error!("{}", e);
+            error!("{}", url);
+            return Err(CommandError::ReqwestError(e))
+        }
+    };
 
-    let text = resp.text().await?;
-    let root: fetch_record::Obj = serde_json::from_str::<fetch_record::Obj>(&text).unwrap();
+
+    let text = match resp.text().await {
+        Ok(text) => text,
+        Err(e) => {
+            error!("{}", e);
+            error!("{}", url);
+            return Err(CommandError::ReqwestError(e))
+        }
+    };
+
+    let root: fetch_record::Obj = match serde_json::from_str::<fetch_record::Obj>(&text) {
+        Ok(root) => root,
+        Err(e) => {
+            error!("{}", e);
+            error!("{}", url);
+            return Err(CommandError::SerdeJsonError(e))
+        }
+    };
 
     let start = root.values.first().unwrap();
     let end = root.values.last().unwrap();
