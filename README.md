@@ -18,13 +18,14 @@ cargo install sqlx-cli
 
 Create the database and run migrations
 ```
-sqlx-cli database create
-sqlx-cli migrate run
+sqlx database create
+sqlx migrate run
 ```
 
 Install the program
 ```
-cargo install --path .
+cargo install --path /cli
+cargo install --path /api
 ```
 
 ### Command help
@@ -33,9 +34,12 @@ Usage: twelve --symbol <SYMBOL> --start <START> --end <END> --interval <INTERVAL
 
 Running command example
 ```
-twelve -s=BTC/USD --start=2023-05-09 --end='2023-05-10 23:59:59' -i=5min
+twelve-cli -s=BTC/USD --start=2023-05-09 --end='2023-05-10 23:59:59' -i=5min
 ```
 
+### API deployment example
+
+https://gist.github.com/belst/ff36c5f3883f7bf9b06c379d0a7bed9e
 
 ### Local Docker Setup
 
