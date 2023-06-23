@@ -22,6 +22,8 @@ struct Cli {
     end: String,
     #[arg(short, long)]
     interval: String,
+    #[arg(long)]
+    exchange: Option<String>,
 }
 
 #[tokio::main]
@@ -33,7 +35,7 @@ async fn main() -> Result<(), CommandError> {
     let cli = Cli::parse();
     let api_key: String = dotenv!("TWELVE_SECRET").to_owned();
 
-    let url :String = fetch_record::format_endpoint(api_key, cli.symbol, cli.start, cli.end, cli.interval);
+    let url :String = fetch_record::format_endpoint(api_key, cli.symbol, cli.start, cli.end, cli.interval, cli.exchange);
     println!("{:?}", url);
 
     let resp = match reqwest::get(&url).await {
@@ -102,7 +104,7 @@ async fn main() -> Result<(), CommandError> {
         diff_2
     };
 
-    match core_service::repository::timeseries::insert(root.meta.symbol, &start.datetime, &end.datetime, diff, open_date, open_value, close_date, close_value).await {
+    match core_service::repository::timeseries::insert(root.meta.symbol, &start.datetime, &end.datetime, diff, open_date, open_value, close_date, close_value, root.meta.exchange).await {
         Ok(n) => n,
         Err(e) => {
             error!("{:?}", e);
